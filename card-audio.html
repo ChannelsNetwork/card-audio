@@ -1,0 +1,349 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../soso-text-input/soso-text-input.html">
+<link rel="import" href="../soso-file-picker/soso-file-picker.html">
+<link rel="import" href="./soso-textarea-special.html">
+
+<dom-module id="card-audio-composer">
+  <template>
+    <style is="custom-style">
+      .container {
+        max-width: 600px;
+        margin: 25px auto;
+        padding: 15px;
+      }
+
+      soso-text-input {
+        margin: 25px 0;
+        --soso-label-color: #2E7D32;
+        --soso-label-size: 90%;
+        --soso-valid-color: #2E7D32;
+      }
+
+      #imagePicker {
+        height: 200px;
+      }
+
+      #audioPicker {
+        height: 100px;
+      }
+
+      #imagePickerPanel {
+        position: relative;
+        margin: 25px 0;
+      }
+
+      #audioPickerPanel {
+        position: relative;
+        margin: 25px 0;
+      }
+
+      #progress {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        padding: 5px;
+        background-color: #FFF59D;
+        font-size: 16px;
+      }
+
+      #audioPanel {
+        max-width: 800px;
+        width: 100%;
+        position: relative;
+      }
+
+      audio {
+        width: 100%;
+        height: auto;
+      }
+
+      #uploadingThumbnail {
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 5px;
+        background-color: #FFF59D;
+        font-size: 16px;
+      }
+
+      .seekExplain {
+        font-size: 14px;
+        font-style: italic;
+      }
+
+      soso-textarea-special {
+        width: 100%;
+        outline: 1px solid #ccc;
+        padding: 3px;
+      }
+
+      #imagePanel {
+        margin: 15px 0;
+      }
+
+      .image {
+        max-width: 100%;
+        max-height: 75vh;
+        margin: 0 auto;
+        display: block;
+      }
+    </style>
+    <div class="container">
+      <div id="imagePickerPanel">
+        <soso-file-picker id="imagePicker" label="Drag an image" accept="image/*" on-files="_onImageFile"></soso-file-picker>
+        <div id="imageProgress" style="display:none;">
+          <div>uploading...</div>
+        </div>
+      </div>
+      <div id="imagePanel" style="display:none;">
+        <img class="image" src="[[imageUrl]]">
+      </div>
+      <div id="audioPickerPanel">
+        <soso-file-picker id="audioPicker" label="Drag an mp3 audio file" accept="audio/mpeg,.mp3" on-files="_onAudioFile"></soso-file-picker>
+        <div id="audioProgress" style="display:none;">
+          <div>uploading...</div>
+        </div>
+      </div>
+      <div id="audioPanel" style="display:none;">
+        <audio id="audio" controls src="[[_audioUrl]]" autoplay>Your browser does not support HTML5 audio.</audio>
+      </div>
+      <div>
+        <soso-text-input id="title" label="Title"></soso-text-input>
+        <soso-textarea-special id="description" placeholder="Description" rows="5"></soso-textarea-special>
+      </div>
+    </div>
+  </template>
+  <script>
+    class CardAudioComposer extends Polymer.Element {
+      static get is() { return 'card-audio-composer'; }
+      static get properties() {
+        return {
+          services: Object,
+          initialState: Object,
+          author: Object,
+          _imageUrl: String,
+          _audioUrl: String
+        };
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        this._ready = false;
+        this.$.imagePanel.style.display = "none";
+        this.$.audioPanel.style.display = "none";
+        this.$.imageProgress.style.display = "none";
+        this.$.audioProgress.style.display = "none";
+        this.$.imagePicker.style.height = "200px";
+        this.$.audioPicker.style.height = "100px";
+        if (this.initialState && this.initialState.shared && this.initialState.shared.files) {
+          for (const fileId of Object.keys(this.initialState.shared.files)) {
+            const fileInfo = this.initialState.shared.files[fileId];
+            if (fileInfo.key === 'image') {
+              this._imageFileId = fileId;
+              this._imageUrl = fileInfo.url;
+              this.$.imagePanel.style.display = "";
+              this.$.imagePicker.style.height = "50px";
+            } else if (fileInfo.key === 'audio') {
+              this._audioFileId = fileId;
+              this._audioUrl = fileInfo.url;
+              this.$.audioPanel.style.display = "";
+              this.$.audioPicker.style.height = "50px";
+            }
+          }
+        }
+        if (this.initialState && this.initialState.shared && this.initialState.shared.properties) {
+          let props = this.initialState.shared.properties;
+          this.$.title.value = props.title || "";
+          this.$.description.value = props.description || "";
+        }
+        this._refreshReady();
+      }
+
+      _refreshReady() {
+        const ready = this.$.title.value && this._audioFileId;
+        if (ready !== this._ready) {
+          this._ready = ready;
+          this.dispatchEvent(new CustomEvent('state-ready-change', { bubbles: true, composed: true, detail: { ready: this._ready } }));
+        }
+      }
+
+      get isReady() {
+        return this._ready;
+      }
+
+      get summary() {
+        return {
+          imageURL: this._imageUrl,
+          imageId: this._imageId,
+          title: this.$.title.value,
+          text: this.$.description.value ? this.$.description.value.trim().split('\n')[0] : null
+        };
+      }
+
+      get sharedState() {
+        const result = {
+          properties: {
+            title: this.$.title.value,
+            description: this.$.description.value
+          },
+          collections: {},
+          files: {}
+        };
+        if (this._imageFileId) {
+          result.files[this._imageFileId] = { key: "image" };
+        }
+        if (this._audioFileId) {
+          result.files[this._audioFileId] = { key: "audio" };
+        }
+        return result;
+      }
+
+      get searchText() {
+        return this.$.title.value + " " + this.$.description.value;
+      }
+
+      _onImageFile(event) {
+        this.$.imageProgress.style.display = "";
+        this.services.upload(event.detail.file).then((response) => {
+          this.set('_imageUrl', response.url);
+          this._imageFileId = response.fileId;
+          this.$.imageProgress.style.display = "none";
+          this.$.imagePanel.style.display = "";
+          this.$.imagePicker.style.height = "50px";
+          this._refreshReady();
+        }).catch((err) => {
+          this.$.filePicker.clear();
+          this.$.imageProgress.style.display = "none";
+          this.$.imagePanel.style.display = "none";
+          this.$.imagePicker.style.height = "200px";
+          this._imageUrl = null;
+          this._imageFileId = null;
+          this._refreshReady();
+          console.error(err);
+          this._setError("Failed to load image file");
+        });
+      }
+
+      _onAudioFile(event) {
+        this.$.audioProgress.style.display = "";
+        this.services.upload(event.detail.file).then((response) => {
+          this.set('_audioUrl', response.url);
+          this._audioFileId = response.fileId;
+          this.$.audioProgress.style.display = "none";
+          this.$.audioPicker.style.height = "50px";
+          this.$.audioPanel.style.display = "";
+          this._refreshReady();
+        }).catch((err) => {
+          this.$.filePicker.clear();
+          this.$.audioProgress.style.display = "none";
+          this.$.audioPanel.style.display = "none";
+          this.$.audioPicker.style.height = "100px";
+          this._audioUrl = null;
+          this._audioFileId = null;
+          this._refreshReady();
+          console.error(err);
+          this._setError("Failed to load audio file");
+        });
+      }
+    }
+    window.customElements.define(CardAudioComposer.is, CardAudioComposer);
+  </script>
+</dom-module>
+
+<dom-module id="card-audio-viewer">
+  <template>
+    <style>
+      .container {
+        max-width: 800px;
+        margin: 15px auto;
+        padding: 10px;
+      }
+
+      audio {
+        width: 100%;
+        height: auto;
+      }
+
+      .text {
+        padding: 5px 15px;
+      }
+
+      a,
+      a:visited,
+      a:hover {
+        color: #2E7D32;
+        outline: none;
+        letter-spacing: 0.05em;
+        text-decoration: none;
+      }
+
+      a:hover {
+        box-shadow: 0 1px 0px 0;
+      }
+
+      #image {
+        max-width: 100%;
+        max-height: 75vh;
+        margin: 0 auto;
+        display: block;
+      }
+    </style>
+    <div class="container">
+      <div id="imagePanel" style="display:none;">
+        <img id="image">
+      </div>
+      <div class="container">
+        <div>
+          <audio id="audio" controls autoplay>Your browser does not support HTML5 audio.</audio>
+        </div>
+        <div class="text">
+          <h2>[[sharedState.properties.title]]</h2>
+          <p id="description"></p>
+        </div>
+      </div>
+    </div>
+
+  </template>
+  <script type="text/javascript" src="urlize.js"></script>
+  <script type="text/javascript" src="urlize_tlds.js"></script>
+  <script>
+    class CardAudioViewer extends Polymer.Element {
+      static get is() { return 'card-audio-viewer'; }
+      static get properties() {
+        return {
+          sharedState: Object,
+          author: Object,
+          user: Object
+        };
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        const description = this.sharedState.properties.description;
+        if (description) {
+          let html = urlize(description, {
+            autoescape: true,
+            target: "blank",
+            trim: "www",
+            top_level_domains: urlize.top_level_domains
+          });
+          html = html.split('\n').join('<br>\n');
+          this.$.description.innerHTML = html;
+        }
+        if (this.sharedState.files) {
+          for (const key of Object.keys(this.sharedState.files)) {
+            switch (key) {
+              case 'image':
+                this.$.image.src = this.sharedState.files[key].url;
+                break;
+              case 'audio':
+                this.$.audio.src = this.sharedState.files[key].url;
+                break;
+              default:
+                break;
+            }
+          }
+        }
+      }
+    }
+    window.customElements.define(CardAudioViewer.is, CardAudioViewer);
+  </script>
+</dom-module>
