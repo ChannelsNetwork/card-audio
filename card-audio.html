@@ -96,7 +96,7 @@
         </div>
       </div>
       <div id="imagePanel" style="display:none;">
-        <img class="image" src="[[imageUrl]]">
+        <img class="image" src="[[_imageUrl]]">
       </div>
       <div id="audioPickerPanel">
         <soso-file-picker id="audioPicker" label="Drag an mp3 audio file" accept="audio/mpeg,.mp3" on-files="_onAudioFile"></soso-file-picker>
@@ -108,8 +108,8 @@
         <audio id="audio" controls src="[[_audioUrl]]" autoplay>Your browser does not support HTML5 audio.</audio>
       </div>
       <div>
-        <soso-text-input id="title" label="Title"></soso-text-input>
-        <soso-textarea-special id="description" placeholder="Description" rows="5"></soso-textarea-special>
+        <soso-text-input id="title" label="Title" on-input="_onInput"></soso-text-input>
+        <soso-textarea-special id="description" placeholder="Description" rows="5" on-input="_onInput"></soso-textarea-special>
       </div>
     </div>
   </template>
@@ -155,6 +155,10 @@
           this.$.title.value = props.title || "";
           this.$.description.value = props.description || "";
         }
+        this._refreshReady();
+      }
+
+      _onInput() {
         this._refreshReady();
       }
 
@@ -206,6 +210,7 @@
         this.services.upload(event.detail.file).then((response) => {
           this.set('_imageUrl', response.url);
           this._imageFileId = response.fileId;
+          this.$.image
           this.$.imageProgress.style.display = "none";
           this.$.imagePanel.style.display = "";
           this.$.imagePicker.style.height = "50px";
