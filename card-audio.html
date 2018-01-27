@@ -105,7 +105,7 @@
         </div>
       </div>
       <div id="audioPanel" style="display:none;">
-        <audio id="audio" controls src="[[_audioUrl]]" autoplay>Your browser does not support HTML5 audio.</audio>
+        <audio id="audio" controls src="[[_audioUrl]]">Your browser does not support HTML5 audio.</audio>
       </div>
       <div>
         <soso-text-input id="title" label="Title" on-input="_onInput"></soso-text-input>
@@ -334,13 +334,14 @@
           this.$.description.innerHTML = html;
         }
         if (this.sharedState.files) {
-          for (const key of Object.keys(this.sharedState.files)) {
-            switch (key) {
+          for (const fileId of Object.keys(this.sharedState.files)) {
+            const entry = this.sharedState.files[fileId];
+            switch (entry.key) {
               case 'image':
-                this.$.image.src = this.sharedState.files[key].url;
+                this.$.image.src = entry.url;
                 break;
               case 'audio':
-                this.$.audio.src = this.sharedState.files[key].url;
+                this.$.audio.src = entry.url;
                 break;
               default:
                 break;
