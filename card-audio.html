@@ -105,7 +105,7 @@
         </div>
       </div>
       <div id="audioPanel" style="display:none;">
-        <audio id="audio" controls src="[[_audioUrl]]">Your browser does not support HTML5 audio.</audio>
+        <audio id="audio" controls controlsList="nodownload" src="[[_audioUrl]]">Your browser does not support HTML5 audio.</audio>
       </div>
       <div>
         <soso-text-input id="title" label="Title" on-input="_onInput"></soso-text-input>
@@ -298,7 +298,7 @@
       </div>
       <div class="container">
         <div>
-          <audio id="audio" controls autoplay>Your browser does not support HTML5 audio.</audio>
+          <audio id="audio" controls controlsList="nodownload" autoplay>Your browser does not support HTML5 audio.</audio>
         </div>
         <div class="text">
           <h2>[[sharedState.properties.title]]</h2>
