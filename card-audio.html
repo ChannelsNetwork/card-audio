@@ -1,6 +1,7 @@
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../soso-text-input/soso-text-input.html">
 <link rel="import" href="../soso-file-picker/soso-file-picker.html">
+<link rel="import" href="../soso-icon/soso-icon.html">
 <link rel="import" href="./soso-textarea-special.html">
 
 <dom-module id="card-audio-composer">
@@ -81,22 +82,58 @@
         margin: 15px 0;
       }
 
+      .imageContainer {
+        display: block;
+        margin: 0 auto;
+        position: relative;
+      }
+
       .image {
         max-width: 100%;
         max-height: 75vh;
-        margin: 0 auto;
         display: block;
+      }
+
+      #imageClose {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(0, 0, 0, 0, 5);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 16px;
+        cursor: pointer;
+      }
+
+      .rightAlign {
+        text-align: right;
+        height: 45px;
+      }
+
+      .linkButton {
+        text-decoration: underline;
+        font-size: 15px;
+        cursor: pointer;
+        color: #555;
+      }
+
+      #title {
+        font-size: 18px;
       }
     </style>
     <div class="container">
       <div id="imagePickerPanel">
-        <soso-file-picker id="imagePicker" label="Drag an image" accept="image/*" on-files="_onImageFile"></soso-file-picker>
+        <soso-file-picker id="imagePicker" label="Add a cover image (optional)" accept="image/*" on-files="_onImageFile"></soso-file-picker>
         <div id="imageProgress" style="display:none;">
           <div>uploading...</div>
         </div>
       </div>
       <div id="imagePanel" style="display:none;">
-        <img class="image" src="[[_imageUrl]]">
+        <div class="imageContainer">
+          <img class="image" src="[[_imageUrl]]">
+          <soso-icon id="imageClose" icon-map="[[iconMap]]" icon="close" on-click="_onImageClose"></soso-icon>
+        </div>
       </div>
       <div id="audioPickerPanel">
         <soso-file-picker id="audioPicker" label="Drag an mp3 audio file" accept="audio/mpeg,.mp3" on-files="_onAudioFile"></soso-file-picker>
@@ -105,7 +142,12 @@
         </div>
       </div>
       <div id="audioPanel" style="display:none;">
-        <audio id="audio" controlsList="nodownload" controls src="[[_audioUrl]]">Your browser does not support HTML5 audio.</audio>
+        <div class="rightAlign">
+          <div class="linkButton" on-click="_onNewAudio">select different audio</div>
+        </div>
+        <div>
+          <audio id="audio" controlsList="nodownload" controls src="[[_audioUrl]]">Your browser does not support HTML5 audio.</audio>
+        </div>
       </div>
       <div>
         <soso-text-input id="title" label="Title" on-input="_onInput"></soso-text-input>
@@ -121,19 +163,21 @@
           services: Object,
           initialState: Object,
           author: Object,
+          iconMap: Object,
           _imageUrl: String,
           _audioUrl: String
         };
       }
       connectedCallback() {
         super.connectedCallback();
+        this.set('iconMap', {
+          "close": "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+        });
         this._ready = false;
         this.$.imagePanel.style.display = "none";
         this.$.audioPanel.style.display = "none";
         this.$.imageProgress.style.display = "none";
         this.$.audioProgress.style.display = "none";
-        this.$.imagePicker.style.height = "200px";
-        this.$.audioPicker.style.height = "100px";
         if (this.initialState && this.initialState.shared && this.initialState.shared.files) {
           for (const fileId of Object.keys(this.initialState.shared.files)) {
             const fileInfo = this.initialState.shared.files[fileId];
@@ -141,12 +185,12 @@
               this._imageFileId = fileId;
               this._imageUrl = fileInfo.url;
               this.$.imagePanel.style.display = "";
-              this.$.imagePicker.style.height = "50px";
+              this.$.imagePicker.style.display = "none";
             } else if (fileInfo.key === 'audio') {
               this._audioFileId = fileId;
               this._audioUrl = fileInfo.url;
               this.$.audioPanel.style.display = "";
-              this.$.audioPicker.style.height = "50px";
+              this.$.audioPicker.style.display = "";
             }
           }
         }
@@ -205,21 +249,34 @@
         return this.$.title.value + " " + this.$.description.value;
       }
 
+      _onImageClose() {
+        this.$.imagePicker.clear();
+        this.$.imagePicker.style.display = "";
+        this.$.imageProgress.style.display = "none";
+        this.$.imagePanel.style.display = "none";
+        this._imageUrl = null;
+        this._imageFileId = null;
+        this._refreshReady();
+        this._setError("");
+      }
+
+      _setError(message) {
+
+      }
+
       _onImageFile(event) {
         this.$.imageProgress.style.display = "";
         this.services.upload(event.detail.file).then((response) => {
-          this.set('_imageUrl', response.url);
+          this.set('_imageUrl', "https://channels.cc/4ef31690-3cf6-40da-bd68-9d7f01066063/empty_pop.jpg") // response.url);
           this._imageFileId = response.fileId;
-          this.$.image
           this.$.imageProgress.style.display = "none";
           this.$.imagePanel.style.display = "";
-          this.$.imagePicker.style.height = "50px";
+          this.$.imagePicker.style.display = "none";
           this._refreshReady();
         }).catch((err) => {
-          this.$.filePicker.clear();
+          this.$.imagePicker.clear();
           this.$.imageProgress.style.display = "none";
           this.$.imagePanel.style.display = "none";
-          this.$.imagePicker.style.height = "200px";
           this._imageUrl = null;
           this._imageFileId = null;
           this._refreshReady();
@@ -228,20 +285,31 @@
         });
       }
 
+      _onNewAudio() {
+        this.$.audioPicker.clear();
+        this.$.audioPicker.style.display = "";
+        this.$.audioProgress.style.display = "none";
+        this.$.audioPanel.style.display = "none";
+        this._audioUrl = null;
+        this._audioFileId = null;
+        this._refreshReady();
+        this._setError("");
+      }
+
       _onAudioFile(event) {
         this.$.audioProgress.style.display = "";
         this.services.upload(event.detail.file).then((response) => {
           this.set('_audioUrl', response.url);
           this._audioFileId = response.fileId;
           this.$.audioProgress.style.display = "none";
-          this.$.audioPicker.style.height = "50px";
+          this.$.audioPicker.style.display = "none";
           this.$.audioPanel.style.display = "";
           this._refreshReady();
         }).catch((err) => {
-          this.$.filePicker.clear();
+          this.$.audioPicker.clear();
           this.$.audioProgress.style.display = "none";
           this.$.audioPanel.style.display = "none";
-          this.$.audioPicker.style.height = "100px";
+          this.$.audioPicker.style.display = "";
           this._audioUrl = null;
           this._audioFileId = null;
           this._refreshReady();
