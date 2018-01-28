@@ -267,7 +267,7 @@
       _onImageFile(event) {
         this.$.imageProgress.style.display = "";
         this.services.upload(event.detail.file).then((response) => {
-          this.set('_imageUrl', "https://channels.cc/4ef31690-3cf6-40da-bd68-9d7f01066063/empty_pop.jpg") // response.url);
+          this.set('_imageUrl', response.url);
           this._imageFileId = response.fileId;
           this.$.imageProgress.style.display = "none";
           this.$.imagePanel.style.display = "";
