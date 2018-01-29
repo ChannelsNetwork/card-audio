@@ -244,10 +244,10 @@
           files: {}
         };
         if (this._imageFileId) {
-          result.files[this._imageFileId] = { key: "image" };
+          result.files[this._imageFileId] = { key: "image", url: this_imageUrl };
         }
         if (this._audioFileId) {
-          result.files[this._audioFileId] = { key: "audio" };
+          result.files[this._audioFileId] = { key: "audio", url: this._audioUrl };
         }
         return result;
       }
