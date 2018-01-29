@@ -161,7 +161,10 @@
       static get properties() {
         return {
           services: Object,
-          initialState: Object,
+          initialState: {
+            type: Object,
+            observer: "_onInitialState"
+          },
           author: Object,
           iconMap: Object,
           _imageUrl: String,
@@ -178,6 +181,10 @@
         this.$.audioPanel.style.display = "none";
         this.$.imageProgress.style.display = "none";
         this.$.audioProgress.style.display = "none";
+        this._onInitialState();
+      }
+
+      _onInitialState() {
         if (this.initialState && this.initialState.shared && this.initialState.shared.files) {
           for (const fileId of Object.keys(this.initialState.shared.files)) {
             const fileInfo = this.initialState.shared.files[fileId];
@@ -383,14 +390,21 @@
       static get is() { return 'card-audio-viewer'; }
       static get properties() {
         return {
-          sharedState: Object,
+          sharedState: {
+            type: Object,
+            observer: '_onSharedState'
+          },
           author: Object,
           user: Object
         };
       }
       connectedCallback() {
         super.connectedCallback();
-        const description = this.sharedState.properties.description;
+        this._onSharedState();
+      }
+
+      _onSharedState() {
+        const description = this.sharedState && this.sharedState.properties ? this.sharedState.properties.description : null;
         if (description) {
           let html = urlize(description, {
             autoescape: true,
@@ -401,7 +415,7 @@
           html = html.split('\n').join('<br>\n');
           this.$.description.innerHTML = html;
         }
-        if (this.sharedState.files) {
+        if (this.sharedState && this.sharedState.files) {
           for (const fileId of Object.keys(this.sharedState.files)) {
             const entry = this.sharedState.files[fileId];
             switch (entry.key) {
@@ -418,6 +432,7 @@
           }
         }
       }
+
     }
     window.customElements.define(CardAudioViewer.is, CardAudioViewer);
   </script>
