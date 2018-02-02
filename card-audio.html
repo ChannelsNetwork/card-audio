@@ -373,7 +373,7 @@
       </div>
       <div class="container">
         <div>
-          <audio id="audio" controlsList="nodownload" controls autoplay>Your browser does not support HTML5 audio.</audio>
+          <audio id="audio" controlsList="nodownload" controls autoplay$="[[active]]">Your browser does not support HTML5 audio.</audio>
         </div>
         <div class="text">
           <h2>[[sharedState.properties.title]]</h2>
@@ -395,12 +395,23 @@
             observer: '_onSharedState'
           },
           author: Object,
-          user: Object
+          user: Object,
+          active: {
+            type: Boolean,
+            value: true,
+            observer: '_onActive'
+          }
         };
       }
       connectedCallback() {
         super.connectedCallback();
         this._onSharedState();
+      }
+
+      _onActive() {
+        if (this.active && this.$.audio && this.$.audio.play) {
+          try { this.$.audio.play(); } catch (err) { console.error(err); }
+        }
       }
 
       _onSharedState() {
