@@ -404,9 +404,18 @@
         };
       }
 
+      constructor() {
+        super();
+        this._visibilityListener = this._visibilityChange.bind(this);
+      }
+
       connectedCallback() {
         super.connectedCallback();
         this._onSharedState();
+      }
+
+      disconnectedCallback() {
+        window.removeEventListener('visibility-change', this._visibilityListener);
       }
 
       get handlesPaymentProgress() {
@@ -416,6 +425,16 @@
       _onActive() {
         if (this.active && this.$.audio && this.$.audio.play && this.$.audio.src) {
           try { this.$.audio.play(); } catch (err) { console.error(err); }
+        }
+        window.addEventListener('visibility-change', this._visibilityListener);
+      }
+
+      _visibilityChange(event) {
+        let hidden = event.detail.hidden;
+        if (hidden) {
+          if (this.$.audio && this.$.audio.pause) {
+            this.$.audio.pause();
+          }
         }
       }
 
@@ -454,6 +473,7 @@
       }
 
       _onPause() {
+        console.log("pause");
         this.dispatchEvent(new CustomEvent('progress-stop'));
       }
 
