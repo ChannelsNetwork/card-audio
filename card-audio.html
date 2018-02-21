@@ -414,7 +414,7 @@
       }
 
       _onActive() {
-        if (this.active && this.$.audio && this.$.audio.play) {
+        if (this.active && this.$.audio && this.$.audio.play && this.$.audio.src) {
           try { this.$.audio.play(); } catch (err) { console.error(err); }
         }
       }
