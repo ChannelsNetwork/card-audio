@@ -440,7 +440,11 @@
                 this.$.imagePanel.style.display = "";
                 break;
               case 'audio':
-                this.$.audio.src = entry.url;
+                try {
+                  this.$.audio.src = entry.url;
+                } catch (err) {
+                  console.warn(err);
+                }
                 break;
               default:
                 break;
@@ -450,11 +454,11 @@
       }
 
       _onPause() {
-        console.log("pause");
+        this.dispatchEvent(new CustomEvent('progress-stop'));
       }
 
       _onPlay() {
-        console.log("play");
+        this.dispatchEvent(new CustomEvent('progress-start'));
       }
 
     }
