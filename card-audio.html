@@ -373,7 +373,7 @@
       </div>
       <div class="container">
         <div>
-          <audio id="audio" controlsList="nodownload" controls autoplay$="[[active]]">Your browser does not support HTML5 audio.</audio>
+          <audio id="audio" controlsList="nodownload" controls loop autoplay$="[[active]]" on-play="_onPlay" on-pause="_onPause">Your browser does not support HTML5 audio.</audio>
         </div>
         <div class="text">
           <h2>[[sharedState.properties.title]]</h2>
@@ -403,14 +403,38 @@
           }
         };
       }
+
+      constructor() {
+        super();
+        this._visibilityListener = this._visibilityChange.bind(this);
+      }
+
       connectedCallback() {
         super.connectedCallback();
         this._onSharedState();
       }
 
+      disconnectedCallback() {
+        window.removeEventListener('visibility-change', this._visibilityListener);
+      }
+
+      get handlesPaymentProgress() {
+        return true;
+      }
+
       _onActive() {
-        if (this.active && this.$.audio && this.$.audio.play) {
+        if (this.active && this.$.audio && this.$.audio.play && this.$.audio.src) {
           try { this.$.audio.play(); } catch (err) { console.error(err); }
+        }
+        window.addEventListener('visibility-change', this._visibilityListener);
+      }
+
+      _visibilityChange(event) {
+        let hidden = event.detail.hidden;
+        if (hidden) {
+          if (this.$.audio && this.$.audio.pause) {
+            this.$.audio.pause();
+          }
         }
       }
 
@@ -435,13 +459,25 @@
                 this.$.imagePanel.style.display = "";
                 break;
               case 'audio':
-                this.$.audio.src = entry.url;
+                try {
+                  this.$.audio.src = entry.url;
+                } catch (err) {
+                  console.warn(err);
+                }
                 break;
               default:
                 break;
             }
           }
         }
+      }
+
+      _onPause() {
+        this.dispatchEvent(new CustomEvent('progress-stop'));
+      }
+
+      _onPlay() {
+        this.dispatchEvent(new CustomEvent('progress-start'));
       }
 
     }
