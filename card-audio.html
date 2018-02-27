@@ -3,6 +3,7 @@
 <link rel="import" href="../soso-file-picker/soso-file-picker.html">
 <link rel="import" href="../soso-icon/soso-icon.html">
 <link rel="import" href="./soso-textarea-special.html">
+<link rel="import" href="../utils-urlize/utils-urlize.html">
 
 <dom-module id="card-audio-composer">
   <template>
@@ -383,8 +384,6 @@
     </div>
 
   </template>
-  <script type="text/javascript" src="urlize.js"></script>
-  <script type="text/javascript" src="urlize_tlds.js"></script>
   <script>
     class CardAudioViewer extends Polymer.Element {
       static get is() { return 'card-audio-viewer'; }
